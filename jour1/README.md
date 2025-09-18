@@ -1,77 +1,114 @@
-Jour 1 – Introduction à Terraform
+# Jour 1 – Introduction à Terraform
 
-Bienvenue dans le Jour 1 de notre challenge 30 jours pour apprendre Terraform en français.
-Aujourd’hui, nous posons les bases et explorons les concepts fondamentaux de Terraform et de l’Infrastructure as Code (IaC).
+> **Challenge 30 jours pour apprendre Terraform en français**
 
-Objectifs du jour
+Bienvenue dans le **Jour 1** de notre challenge ! Aujourd'hui, nous posons les bases et explorons les concepts fondamentaux de Terraform et de l'Infrastructure as Code (IaC).
 
-Comprendre ce qu’est Terraform et pourquoi il est utilisé.
+---
 
-Découvrir le langage HCL (HashiCorp Configuration Language).
+## 📋 Objectifs du jour
 
-Comprendre les concepts de provider, state, backend, et workspaces.
+- [x] Comprendre ce qu'est Terraform et pourquoi il est utilisé
+- [x] Découvrir le langage **HCL** (HashiCorp Configuration Language)
+- [x] Comprendre les concepts de **provider**, **state**, **backend**, et **workspaces**
+- [x] Se familiariser avec le workflow Terraform : `init` → `plan` → `apply`
 
-Se familiariser avec le workflow Terraform : init → plan → apply.
+---
 
-1. Pourquoi Terraform ?
+## Pourquoi Terraform ?
 
-Créer et gérer des infrastructures cloud à la main peut être complexe et chronophage.
-Par exemple, j’ai dû créer un VPC sur AWS entièrement à la main, et même avec de l’expérience, cela m’a pris des heures pour configurer correctement toutes les ressources et suivre les bonnes pratiques.
+Créer et gérer des infrastructures cloud à la main peut être **complexe** et **chronophage**.
 
-La découverte de Terraform a été une révélation :
+### Exemple concret
+Par exemple, j'ai dû créer un VPC sur AWS entièrement à la main, et même avec de l'expérience, cela m'a pris des heures pour configurer correctement toutes les ressources et suivre les bonnes pratiques.
 
-Terraform permet de décrire l’infrastructure avec du code.
+### La révélation Terraform
+- **Infrastructure as Code** : Terraform permet de décrire l'infrastructure avec du code
+- **Automatisation** : Le moteur Terraform se charge de créer, modifier ou supprimer automatiquement les ressources
+- **Gain de temps** : Une tâche qui prenait des heures peut maintenant être réalisée en quelques minutes
 
-Le moteur Terraform se charge ensuite de créer, modifier ou supprimer automatiquement les ressources.
+---
 
-Une tâche qui prenait des heures peut maintenant être réalisée en quelques minutes.
+##  Comprendre l'IaC et Terraform
 
-2. Comprendre l’IaC et Terraform
+L'**Infrastructure as Code (IaC)** est une approche permettant de provisionner des infrastructures à l'aide de pratiques de codage.
 
-L’Infrastructure as Code (IaC) est une approche permettant de provisionner des infrastructures à l’aide de pratiques de codage.
+###  Points clés
 
-Quelques points importants :
+| Aspect | Description |
+|--------|-------------|
+| **Alternatives** | Pulumi, AWS CloudFormation, GCP Deployment Manager |
+| **Avantages Terraform** | Multi-cloud et déclaratif → plus simple et flexible |
+| **Intégration** | Versioning Git, analyse qualité/sécurité, pipelines CI/CD |
 
-Terraform n’est pas le seul outil IaC : Pulumi, AWS CloudFormation, ou GCP Deployment Manager existent aussi.
+---
 
-Terraform est multi-cloud et déclaratif, ce qui le rend plus simple et flexible.
+## 🧩 Concepts fondamentaux de Terraform
 
-L’infrastructure peut être versionnée avec Git, analysée pour la qualité et la sécurité, et intégrée dans des pipelines CI/CD.
+###  HCL (HashiCorp Configuration Language)
+Un langage déclaratif et lisible, proche de l'anglais, permettant de définir l'état final souhaité de l'infrastructure.
 
-3. Concepts fondamentaux de Terraform
+###  Provider (Fournisseur)
+Plugin qui permet à Terraform de communiquer avec des services externes comme AWS, Azure, Google Cloud, Docker ou GitHub.
 
-HCL (HashiCorp Configuration Language) : un langage déclaratif et lisible, proche de l’anglais, permettant de définir l’état final souhaité de l’infrastructure.
+###  State (État)
+Fichier `terraform.tfstate` qui stocke la photographie actuelle de l'infrastructure.
 
-Provider (Fournisseur) : plugin qui permet à Terraform de communiquer avec des services externes comme AWS, Azure, Google Cloud, Docker ou GitHub.
+###  Backend
+Emplacement où l'état est stocké, local ou distant (ex : AWS S3, Azure Blob Storage).
 
-State (État) : fichier terraform.tfstate qui stocke la photographie actuelle de l’infrastructure.
+###  Workspaces
+Permettent de gérer plusieurs environnements (dev, test, prod) avec des états séparés.
 
-Backend : emplacement où l’état est stocké, local ou distant (ex : AWS S3, Azure Blob Storage).
+---
 
-Workspaces : permettent de gérer plusieurs environnements (dev, test, prod) avec des états séparés.
-
-4. Le workflow Terraform en pratique
+##  Le workflow Terraform en pratique
 
 Le cycle de déploiement Terraform suit toujours ces étapes :
 
-Changement souhaité : ajouter, modifier ou supprimer une ressource.
+```mermaid
+graph LR
+    A[Changement souhaité] --> B[terraform init]
+    B --> C[terraform plan]
+    C --> D[terraform apply]
+    D --> E[Infrastructure déployée]
+```
 
-terraform init : initialise le projet, télécharge les providers et configure le backend.
+### 📋 Détail des étapes
 
-terraform plan : compare l’état actuel avec le code et génère un plan d’action.
+1. **Changement souhaité** : ajouter, modifier ou supprimer une ressource
+2. **`terraform init`** : initialise le projet, télécharge les providers et configure le backend
+3. **`terraform plan`** : compare l'état actuel avec le code et génère un plan d'action
+4. **`terraform apply`** : applique le plan en créant, modifiant ou supprimant les ressources
 
-terraform apply : applique le plan en créant, modifiant ou supprimant les ressources.
+> **💡 Note** : Ce flux garantit que l'infrastructure correspond exactement à ce qui est défini dans le code.
 
-Ce flux garantit que l’infrastructure correspond exactement à ce qui est défini dans le code.
+---
 
-5. Ce que vous allez apprendre dans la prochaine partie
+##  Prochaines étapes
 
-Dans le Jour 2, nous entrerons dans la pratique en créant notre premier fichier Terraform et en configurant un provider AWS.
+Dans le **Jour 2**, nous entrerons dans la pratique en :
+- Créant notre premier fichier Terraform
+- Configurant un provider AWS
+- Déployant notre première ressource
 
-Bibliographie & Ressources
+---
 
-Documentation Terraform – AWS Provider
+##  Ressources et bibliographie
 
-Brikman, Y. (2023). Terraform: Up and Running, 3rd Edition. O’Reilly Media.
+###  Documentation officielle
+- [Documentation Terraform – AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
 
-McKendrick, R. (2021). Infrastructure as Code for Beginners. Packt Publishing.
+### 📚 Livres recommandés
+- **Brikman, Y.** (2023). *Terraform: Up and Running, 3rd Edition*. O'Reilly Media.
+- **McKendrick, R.** (2021). *Infrastructure as Code for Beginners*. Packt Publishing.
+
+---
+
+<div align="center">
+
+**[⬅️ Accueil](../README.md) | [Jour 2 ➡️](../jour2/README.md)**
+
+*Challenge 30 jours Terraform - Jour 1/30*
+
+</div>
