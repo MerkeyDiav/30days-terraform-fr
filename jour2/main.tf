@@ -40,3 +40,20 @@ module "vpc" {
   # Exemple d'utilisation des tags personnalisés
   tags = local.default_tags
 }
+
+# Module EC2 - Démonstration de l'utilisation des variables pour personnaliser le comportement
+module "ec2_web" {
+  source = "./modules/ec2"
+  
+  # Personnalisation du comportement via les variables
+  instance_type    = "t3.micro"                      # Type d'instance (validé)
+  subnet_id        = module.vpc.public_subnet_ids[0] # Utilise le premier subnet public du VPC
+  vpc_id           = module.vpc.vpc_id               # VPC pour le security group
+  instance_name    = "${local.vpc_config.project_name}-web-server"
+  enable_public_ip = true                            # Active l'IP publique
+  
+  tags = merge(local.default_tags, {
+    Role = "WebServer"
+    Tier = "Frontend"
+  })
+}
