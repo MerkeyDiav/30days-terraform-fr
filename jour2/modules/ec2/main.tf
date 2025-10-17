@@ -15,6 +15,47 @@ data "aws_ami" "ubuntu" {
   }
 }
 
+# Policy document pour permettre à EC2 d'assumer le rôle IAM
+# Cette politique indique à AWS que le service EC2 est autorisé à utiliser ce rôle
+data "aws_iam_policy_document" "instance_assume_role_policy" {
+  count = var.enable_iam_role ? 1 : 0
+
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+# Création du rôle IAM pour l'instance
+# Ce rôle servira de conteneur pour les politiques que les utilisateurs voudront attacher
+resource "aws_iam_role" "instance_role" {
+  count = var.enable_iam_role ? 1 : 0
+
+  name               = var.iam_role_name != "" ? var.iam_role_name : "${var.instance_name}-role"
+  assume_role_policy = data.aws_iam_policy_document.instance_assume_role_policy[0].json
+
+  tags = merge(var.tags, {
+    Name = var.iam_role_name != "" ? var.iam_role_name : "${var.instance_name}-role"
+  })
+}
+
+# Instance Profile : le pont entre le rôle IAM et l'instance EC2
+# AWS nécessite cette ressource intermédiaire pour attacher un rôle à une instance
+resource "aws_iam_instance_profile" "instance_profile" {
+  count = var.enable_iam_role ? 1 : 0
+
+  name = aws_iam_role.instance_role[0].name
+  role = aws_iam_role.instance_role[0].name
+
+  tags = merge(var.tags, {
+    Name = "${var.instance_name}-profile"
+  })
+}
+
 # Security Group pour l'instance EC2
 resource "aws_security_group" "ec2_sg" {
   name_prefix = "${var.instance_name}-sg-"
@@ -73,6 +114,9 @@ resource "aws_instance" "main" {
   subnet_id                   = var.subnet_id
   vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
   associate_public_ip_address = var.enable_public_ip
+  
+  # Attachement du profil IAM si activé
+  iam_instance_profile        = var.enable_iam_role ? aws_iam_instance_profile.instance_profile[0].name : null
 
   tags = merge(var.tags, {
     Name = var.instance_name

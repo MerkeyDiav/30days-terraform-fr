@@ -19,6 +19,8 @@ Ce module démontre l'utilisation des variables d'entrée pour personnaliser le 
 | `ami_id` | string | "" | ID de l'AMI (vide = Ubuntu 22.04 latest) | Format AWS : `^ami-[\\d\|\\w]+$` ou vide |
 | `instance_name` | string | "terraform-ec2-instance" | Nom de l'instance | Entre 3 et 100 caractères |
 | `enable_public_ip` | bool | true | Activer l'IP publique | - |
+| `enable_iam_role` | bool | true | Créer un rôle IAM pour l'instance | - |
+| `iam_role_name` | string | "" | Nom personnalisé du rôle IAM (vide = auto) | - |
 | `tags` | map(string) | {} | Tags additionnels | - |
 
 ## Outputs
@@ -31,6 +33,9 @@ Ce module démontre l'utilisation des variables d'entrée pour personnaliser le 
 | `security_group_id` | ID du security group |
 | `instance_arn` | ARN de l'instance |
 | `ami_used` | ID de l'AMI utilisée |
+| `iam_role_name` | Nom du rôle IAM |
+| `iam_role_arn` | ARN du rôle IAM |
+| `iam_role` | Objet complet du rôle IAM |
 
 ## Ressources créées
 
@@ -40,6 +45,8 @@ Ce module démontre l'utilisation des variables d'entrée pour personnaliser le 
   - HTTP (port 80) depuis n'importe où
   - HTTPS (port 443) depuis n'importe où
   - Tout le trafic sortant autorisé
+- 1 Rôle IAM (optionnel, activé par défaut)
+- 1 Instance Profile IAM (optionnel, activé par défaut)
 
 ## Utilisation
 
@@ -92,6 +99,147 @@ module "ec2_custom" {
   ami_id        = "ami-0c55b159cbfafe1f0"
   instance_name = "custom-app-server"
   enable_public_ip = false
+}
+```
+
+### Exemple avec IAM et accès S3
+
+```hcl
+# Créer l'instance avec un rôle IAM
+module "ec2_data_processor" {
+  source = "./modules/ec2"
+  
+  instance_type    = "t3.micro"
+  subnet_id        = module.vpc.private_subnet_ids[0]
+  vpc_id           = module.vpc.vpc_id
+  instance_name    = "data-processor"
+  enable_iam_role  = true
+  enable_public_ip = false
+  
+  tags = {
+    Application = "DataProcessing"
+    Environment = "Production"
+  }
+}
+
+# Créer une politique personnalisée pour l'accès S3
+resource "aws_iam_policy" "s3_data_access" {
+  name        = "data-processor-s3-policy"
+  description = "Permet l'accès au bucket de données"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "arn:aws:s3:::mon-bucket-data/*",
+          "arn:aws:s3:::mon-bucket-data"
+        ]
+      }
+    ]
+  })
+}
+
+# Attacher la politique au rôle de l'instance
+resource "aws_iam_role_policy_attachment" "attach_s3_policy" {
+  role       = module.ec2_data_processor.iam_role_name
+  policy_arn = aws_iam_policy.s3_data_access.arn
+}
+```
+
+### Exemple avec multiples politiques IAM
+
+```hcl
+module "ec2_app" {
+  source = "./modules/ec2"
+  
+  instance_type   = "t3.small"
+  subnet_id       = module.vpc.private_subnet_ids[0]
+  vpc_id          = module.vpc.vpc_id
+  instance_name   = "application-server"
+  iam_role_name   = "app-server-role"
+}
+
+# Politique pour S3
+resource "aws_iam_policy" "s3_policy" {
+  name = "app-s3-access"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["s3:GetObject", "s3:PutObject"]
+      Resource = "arn:aws:s3:::mon-bucket/*"
+    }]
+  })
+}
+
+# Politique pour DynamoDB
+resource "aws_iam_policy" "dynamodb_policy" {
+  name = "app-dynamodb-access"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:Query",
+        "dynamodb:Scan"
+      ]
+      Resource = "arn:aws:dynamodb:*:*:table/ma-table"
+    }]
+  })
+}
+
+# Politique pour Secrets Manager
+resource "aws_iam_policy" "secrets_policy" {
+  name = "app-secrets-access"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["secretsmanager:GetSecretValue"]
+      Resource = "arn:aws:secretsmanager:*:*:secret:app/*"
+    }]
+  })
+}
+
+# Attacher toutes les politiques
+resource "aws_iam_role_policy_attachment" "attach_s3" {
+  role       = module.ec2_app.iam_role_name
+  policy_arn = aws_iam_policy.s3_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "attach_dynamodb" {
+  role       = module.ec2_app.iam_role_name
+  policy_arn = aws_iam_policy.dynamodb_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "attach_secrets" {
+  role       = module.ec2_app.iam_role_name
+  policy_arn = aws_iam_policy.secrets_policy.arn
+}
+```
+
+### Exemple sans rôle IAM
+
+```hcl
+module "ec2_bastion" {
+  source = "./modules/ec2"
+  
+  instance_type    = "t3.micro"
+  subnet_id        = module.vpc.public_subnet_ids[0]
+  vpc_id           = module.vpc.vpc_id
+  instance_name    = "bastion-host"
+  enable_iam_role  = false  # Pas de rôle IAM nécessaire
+  enable_public_ip = true
 }
 ```
 

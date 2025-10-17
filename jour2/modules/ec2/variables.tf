@@ -14,8 +14,8 @@ variable "subnet_id" {
   type        = string
   
   validation {
-    condition     = length(regexall("^subnet-[\\d|\\w]+$", var.subnet_id)) == 1
-    error_message = "Le subnet_id doit correspondre au format AWS ^subnet-[\\d|\\w]+$"
+    condition     = startswith(var.subnet_id, "subnet-") && length(var.subnet_id) > 7
+    error_message = "Le subnet_id doit commencer par 'subnet-' et avoir une longueur suffisante."
   }
 }
 
@@ -24,8 +24,8 @@ variable "vpc_id" {
   type        = string
   
   validation {
-    condition     = length(regexall("^vpc-[\\d|\\w]+$", var.vpc_id)) == 1
-    error_message = "Le vpc_id doit correspondre au format AWS ^vpc-[\\d|\\w]+$"
+    condition     = startswith(var.vpc_id, "vpc-") && length(var.vpc_id) > 4
+    error_message = "Le vpc_id doit commencer par 'vpc-' et avoir une longueur suffisante."
   }
 }
 
@@ -35,8 +35,8 @@ variable "ami_id" {
   default     = ""
   
   validation {
-    condition     = var.ami_id == "" || length(regexall("^ami-[\\d|\\w]+$", var.ami_id)) == 1
-    error_message = "L'ami_id doit correspondre au format AWS ^ami-[\\d|\\w]+$ ou être vide."
+    condition     = var.ami_id == "" || (startswith(var.ami_id, "ami-") && length(var.ami_id) > 4)
+    error_message = "L'ami_id doit commencer par 'ami-' et avoir une longueur suffisante, ou être vide."
   }
 }
 
@@ -61,5 +61,17 @@ variable "tags" {
   description = "Tags additionnels à appliquer à l'instance"
   type        = map(string)
   default     = {}
+}
+
+variable "enable_iam_role" {
+  description = "Activer la création d'un rôle IAM pour l'instance"
+  type        = bool
+  default     = true
+}
+
+variable "iam_role_name" {
+  description = "Nom du rôle IAM (optionnel, utilise instance_name par défaut)"
+  type        = string
+  default     = ""
 }
 

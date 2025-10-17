@@ -28,3 +28,18 @@ output "ami_used" {
   value       = aws_instance.main.ami
 }
 
+output "iam_role_name" {
+  description = "Nom du rôle IAM attaché à l'instance (vide si désactivé)"
+  value       = var.enable_iam_role ? aws_iam_role.instance_role[0].name : ""
+}
+
+output "iam_role_arn" {
+  description = "ARN du rôle IAM attaché à l'instance (vide si désactivé)"
+  value       = var.enable_iam_role ? aws_iam_role.instance_role[0].arn : ""
+}
+
+output "iam_role" {
+  description = "Objet complet du rôle IAM pour permettre l'attachement de politiques personnalisées"
+  value       = var.enable_iam_role ? aws_iam_role.instance_role[0] : null
+}
+
