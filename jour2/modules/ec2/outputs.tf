@@ -43,3 +43,13 @@ output "iam_role" {
   value       = var.enable_iam_role ? aws_iam_role.instance_role[0] : null
 }
 
+output "monitoring_enabled" {
+  description = "Indique si le monitoring CloudWatch est activé"
+  value       = var.enable_monitoring
+}
+
+output "monitoring_config" {
+  description = "Configuration du monitoring utilisée"
+  value       = var.monitoring_config
+}
+

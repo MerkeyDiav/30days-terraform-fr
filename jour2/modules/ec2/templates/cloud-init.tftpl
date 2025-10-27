@@ -1,0 +1,77 @@
+#!/bin/bash
+# Template de configuration cloud-init pour EC2
+# Généré dynamiquement par Terraform
+
+# Configuration de base
+apt-get update
+hostnamectl set-hostname ${instance_name}
+
+# Installation des outils de base
+apt-get install -y htop curl wget unzip
+
+%{ if enable_monitoring }
+# Installation de l'agent CloudWatch
+echo "Configuration du monitoring CloudWatch..."
+wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+dpkg -i amazon-cloudwatch-agent.deb
+
+# Configuration de l'agent CloudWatch
+cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << EOF
+{
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/syslog",
+            "log_group_name": "${log_group}",
+            "log_stream_name": "${instance_name}",
+            "timestamp_format": "%b %d %H:%M:%S"
+          }
+        ]
+      }
+    }
+  },
+  "metrics": {
+    "namespace": "CWAgent",
+    "metrics_collected": {
+      "cpu": {
+        "measurement": ["cpu_usage_idle", "cpu_usage_iowait", "cpu_usage_user", "cpu_usage_system"],
+        "metrics_collection_interval": 60
+      },
+      "disk": {
+        "measurement": ["used_percent"],
+        "metrics_collection_interval": 60,
+        "resources": ["*"]
+      },
+      "mem": {
+        "measurement": ["mem_used_percent"],
+        "metrics_collection_interval": 60
+      }
+    }
+  }
+}
+EOF
+
+# Démarrer l'agent CloudWatch
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+echo "Agent CloudWatch configuré et démarré"
+%{ endif }
+
+%{ if iam_role_arn != "" }
+# Configuration IAM
+echo "Instance configurée avec le rôle IAM : ${iam_role_arn}"
+echo "Région AWS : ${region}"
+
+# Test de l'accès aux métadonnées IAM
+curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/ > /tmp/iam-test.txt
+if [ $? -eq 0 ]; then
+    echo "Accès IAM configuré correctement"
+else
+    echo "Erreur : Impossible d'accéder aux métadonnées IAM"
+fi
+%{ endif }
+
+# Configuration finale
+echo "Configuration terminée pour l'instance : ${instance_name}"
+echo "Timestamp : $(date)"

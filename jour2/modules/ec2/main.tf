@@ -114,6 +114,14 @@ resource "aws_instance" "main" {
   subnet_id                   = var.subnet_id
   vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
   associate_public_ip_address = var.enable_public_ip
+  # User data : script personnalisé ou template par défaut
+  user_data = var.user_data_script != "" ? file(var.user_data_script) : templatefile("${path.module}/templates/cloud-init.tftpl", {
+    instance_name     = var.instance_name
+    enable_monitoring = var.enable_monitoring
+    log_group         = var.monitoring_config.log_group
+    region            = var.monitoring_config.region
+    iam_role_arn      = var.enable_iam_role ? aws_iam_role.instance_role[0].arn : ""
+  })
   
   # Attachement du profil IAM si activé
   iam_instance_profile        = var.enable_iam_role ? aws_iam_instance_profile.instance_profile[0].name : null

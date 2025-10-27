@@ -75,3 +75,27 @@ variable "iam_role_name" {
   default     = ""
 }
 
+variable "enable_monitoring" {
+  description = "Activer l'agent de monitoring CloudWatch"
+  type        = bool
+  default     = false
+}
+
+variable "monitoring_config" {
+  description = "Configuration du monitoring"
+  type        = object({
+    log_group = string
+    region    = string
+  })
+  default = {
+    log_group = "/aws/ec2"
+    region    = "us-east-1"
+  }
+}
+
+variable "user_data_script" {
+  description = "Chemin vers un script user_data personnalisé (optionnel)"
+  type        = string
+  default     = ""
+}
+
